@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import * as api from '../lib/api';
 import type { StaffMember, CategoryDefinition, NominationPayload } from '../types';
 
 interface Props {
   nominator: StaffMember;
-  onSubmitted: () => void;
+  initialSelections?: NominationPayload;
+  onReview: (payload: NominationPayload) => void;
 }
 
 const CATEGORIES: CategoryDefinition[] = [
@@ -31,15 +31,25 @@ const EMPTY_SELECTIONS: Selections = {
   most_supportive_staff_id: 0,
 };
 
-export default function NominationForm({ nominator, onSubmitted }: Props) {
+export default function NominationForm({ nominator, initialSelections, onReview }: Props) {
   const [maleStaff,   setMaleStaff]   = useState<StaffMember[]>([]);
   const [femaleStaff, setFemaleStaff] = useState<StaffMember[]>([]);
   const [allStaff,    setAllStaff]    = useState<StaffMember[]>([]);
-  const [selections,  setSelections]  = useState<Selections>(EMPTY_SELECTIONS);
+  const [selections,  setSelections]  = useState<Selections>(
+    initialSelections
+      ? {
+          best_staff_male_id:       initialSelections.best_staff_male_id,
+          best_staff_female_id:     initialSelections.best_staff_female_id,
+          best_dressed_male_id:     initialSelections.best_dressed_male_id,
+          best_dressed_female_id:   initialSelections.best_dressed_female_id,
+          most_social_staff_id:     initialSelections.most_social_staff_id,
+          best_team_player_id:      initialSelections.best_team_player_id,
+          most_supportive_staff_id: initialSelections.most_supportive_staff_id,
+        }
+      : EMPTY_SELECTIONS,
+  );
   const [loadingData, setLoadingData] = useState(true);
-  const [submitting,  setSubmitting]  = useState(false);
   const [fetchError,  setFetchError]  = useState('');
-  const [submitError, setSubmitError] = useState('');
 
   // Load all three staff lists on mount
   useEffect(() => {
@@ -91,30 +101,19 @@ export default function NominationForm({ nominator, onSubmitted }: Props) {
   const allSelected = CATEGORIES.every(c => selections[c.key] !== 0);
   const filled      = CATEGORIES.filter(c => selections[c.key] !== 0).length;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!allSelected) return;
-    setSubmitting(true);
-    setSubmitError('');
-
-    try {
-      const payload: NominationPayload = {
-        nominator_id:            nominator.id,
-        best_staff_male_id:       selections.best_staff_male_id,
-        best_staff_female_id:     selections.best_staff_female_id,
-        best_dressed_male_id:     selections.best_dressed_male_id,
-        best_dressed_female_id:   selections.best_dressed_female_id,
-        most_social_staff_id:     selections.most_social_staff_id,
-        best_team_player_id:      selections.best_team_player_id,
-        most_supportive_staff_id: selections.most_supportive_staff_id,
-      };
-      await api.submitNomination(payload);
-      onSubmitted();
-    } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    onReview({
+      nominator_id:            nominator.id,
+      best_staff_male_id:       selections.best_staff_male_id,
+      best_staff_female_id:     selections.best_staff_female_id,
+      best_dressed_male_id:     selections.best_dressed_male_id,
+      best_dressed_female_id:   selections.best_dressed_female_id,
+      most_social_staff_id:     selections.most_social_staff_id,
+      best_team_player_id:      selections.best_team_player_id,
+      most_supportive_staff_id: selections.most_supportive_staff_id,
+    });
   };
 
   if (loadingData) {
@@ -171,7 +170,7 @@ export default function NominationForm({ nominator, onSubmitted }: Props) {
           in more than one category. Self-nomination is allowed.
         </p>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleReview}>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {CATEGORIES.map(cat => {
               const staffList    = getStaffList(cat.key);
@@ -197,11 +196,10 @@ export default function NominationForm({ nominator, onSubmitted }: Props) {
                       id={cat.key}
                       value={selectedId || ''}
                       onChange={e => handleSelect(cat.key, e.target.value)}
-                      disabled={submitting}
                       className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-xl
                                  text-slate-700 bg-white appearance-none cursor-pointer
                                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                 disabled:bg-slate-50 disabled:cursor-not-allowed transition-shadow text-sm"
+                                 transition-shadow text-sm"
                     >
                       <option value="">— Select nominee —</option>
                       {staffList.map(staff => {
@@ -215,7 +213,6 @@ export default function NominationForm({ nominator, onSubmitted }: Props) {
                         );
                       })}
                     </select>
-                    {/* Chevron */}
                     <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
                       ▼
                     </span>
@@ -239,31 +236,15 @@ export default function NominationForm({ nominator, onSubmitted }: Props) {
             </div>
           </div>
 
-          {submitError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-              <span className="text-red-500 text-sm mt-0.5" aria-hidden>⚠</span>
-              <p className="text-sm text-red-700">{submitError}</p>
-            </div>
-          )}
-
           <button
             type="submit"
-            disabled={!allSelected || submitting}
+            disabled={!allSelected}
             className="mt-6 w-full py-3.5 bg-blue-700 hover:bg-blue-800 active:bg-blue-900
                        disabled:bg-slate-300 disabled:cursor-not-allowed
                        text-white font-semibold rounded-xl transition-colors duration-150
                        flex items-center justify-center gap-2 text-base"
           >
-            {submitting ? (
-              <>
-                <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Submitting…
-              </>
-            ) : allSelected ? (
-              'Submit Nominations'
-            ) : (
-              `Please complete all ${7 - filled} remaining ${7 - filled === 1 ? 'category' : 'categories'}`
-            )}
+            {allSelected ? 'Review Nominations →' : `Please complete all ${7 - filled} remaining ${7 - filled === 1 ? 'category' : 'categories'}`}
           </button>
         </form>
       </div>
