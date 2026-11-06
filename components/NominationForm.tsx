@@ -96,7 +96,6 @@ export default function NominationForm({ nominator, initialSelections, onReview 
 
   const handleSelect = (key: CategoryDefinition['key'], value: string) => {
     setSelections(prev => ({ ...prev, [key]: Number(value) }));
-    setSubmitError('');
   };
 
   const allSelected = CATEGORIES.every(c => selections[c.key] !== 0);
