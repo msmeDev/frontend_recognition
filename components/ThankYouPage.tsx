@@ -30,7 +30,7 @@ export default function ThankYouPage() {
 
         <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-sm text-green-700">
           <p className="font-medium mb-1">Your nominations have been recorded.</p>
-          <p>Results will be announced at the MSME Staff Recognition 2026 ceremony.</p>
+          <p>The MSME Social Committee will now collate the results. The voting date will be announced soon so you can vote for your preferred contestants.</p>
         </div>
 
         <div className="mt-6 pt-6 border-t border-slate-100">
