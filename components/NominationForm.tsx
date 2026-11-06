@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import * as api from '../lib/api';
 import type { StaffMember, CategoryDefinition, NominationPayload } from '../types';
 
 interface Props {
