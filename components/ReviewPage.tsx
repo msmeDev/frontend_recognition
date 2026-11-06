@@ -21,13 +21,30 @@ const CATEGORY_LABELS: Array<{ key: keyof Omit<NominationPayload, 'nominator_id'
   { key: 'most_supportive_staff_id', label: 'Most Supportive Staff', gender: 'all'    },
 ];
 
+// Resolve each category's selected ID to a name using the correct gender-specific list.
+// All three tables have their own auto-increment IDs starting at 1, so a flat id→name
+// map built from all lists would collide (femaleStaff[id=1] overwrites maleStaff[id=1]).
+function buildCategoryNameMap(
+  payload: NominationPayload,
+  male: StaffMember[],
+  female: StaffMember[],
+  all: StaffMember[],
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const { key, gender } of CATEGORY_LABELS) {
+    const id = payload[key];
+    const list = gender === 'male' ? male : gender === 'female' ? female : all;
+    result[key] = list.find(s => s.id === id)?.full_name ?? '—';
+  }
+  return result;
+}
+
 export default function ReviewPage({ nominator, payload, onBack, onSubmitted }: Props) {
-  const [nameMap, setNameMap]       = useState<Record<number, string>>({});
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
   const [loadingData, setLoadingData] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  // Load all staff lists once so we can resolve IDs → names
   useEffect(() => {
     const load = async () => {
       try {
@@ -36,15 +53,13 @@ export default function ReviewPage({ nominator, payload, onBack, onSubmitted }: 
           api.getFemaleStaff(),
           api.getAllStaff(),
         ]);
-        const map: Record<number, string> = {};
-        [...male, ...female, ...all].forEach(s => { map[s.id] = s.full_name; });
-        setNameMap(map);
+        setCategoryNames(buildCategoryNameMap(payload, male, female, all));
       } finally {
         setLoadingData(false);
       }
     };
     load();
-  }, []);
+  }, [payload]);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -90,7 +105,7 @@ export default function ReviewPage({ nominator, payload, onBack, onSubmitted }: 
               <li key={key} className="flex items-center justify-between py-3.5 gap-4">
                 <span className="text-sm font-medium text-slate-600 shrink-0">{label}</span>
                 <span className="text-sm font-semibold text-slate-900 text-right">
-                  {nameMap[payload[key]] ?? '—'}
+                  {categoryNames[key] ?? '—'}
                 </span>
               </li>
             ))}
