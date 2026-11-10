@@ -8,6 +8,12 @@ export interface VerifyResponse {
   staff?: StaffMember;
 }
 
+// GET /api/verify/search result (camelCase, straight from Prisma)
+export interface StaffSearchResult {
+  id: number;
+  fullName: string;
+}
+
 export interface NominationPayload {
   nominator_id: number;
   best_staff_male_id: number;

@@ -1,5 +1,6 @@
 import type {
   StaffMember,
+  StaffSearchResult,
   VerifyResponse,
   NominationPayload,
   NominationResponse,
@@ -39,6 +40,10 @@ export function verifyStaff(name: string): Promise<VerifyResponse> {
     method: 'POST',
     body: JSON.stringify({ name }),
   });
+}
+
+export function searchStaff(query: string, signal?: AbortSignal): Promise<StaffSearchResult[]> {
+  return request(`/api/verify/search?q=${encodeURIComponent(query)}`, { signal });
 }
 
 export function checkNominator(nominatorId: number): Promise<{ hasNominated: boolean }> {
