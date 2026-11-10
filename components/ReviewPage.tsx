@@ -1,70 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import * as api from '../lib/api';
-import type { StaffMember, NominationPayload } from '../types';
+import { CATEGORIES, buildPayload, missingCategories } from '../lib/categories';
+import type { StaffMember, Nominations } from '../types';
+import { Check, ClipboardDoodle, IconBadge } from './Doodles';
+import { NominatorBanner, Note, PageHeader } from './WizardChrome';
 
 interface Props {
   nominator: StaffMember;
-  payload: NominationPayload;
+  // The same object the form's dropdowns are bound to.
+  nominations: Nominations;
   onBack: () => void;
+  // Called only after the API accepted the submission.
   onSubmitted: () => void;
+  onStartOver: () => void;
 }
 
-const CATEGORY_LABELS: Array<{ key: keyof Omit<NominationPayload, 'nominator_id'>; label: string; gender: 'male' | 'female' | 'all' }> = [
-  { key: 'best_staff_male_id',       label: 'Best Staff Male',       gender: 'male'   },
-  { key: 'best_staff_female_id',     label: 'Best Staff Female',     gender: 'female' },
-  { key: 'best_dressed_male_id',     label: 'Best Dressed Male',     gender: 'male'   },
-  { key: 'best_dressed_female_id',   label: 'Best Dressed Female',   gender: 'female' },
-  { key: 'most_social_staff_id',     label: 'Most Social Staff',     gender: 'all'    },
-  { key: 'best_team_player_id',      label: 'Best Team Player',      gender: 'all'    },
-  { key: 'most_supportive_staff_id', label: 'Most Supportive Staff', gender: 'all'    },
-];
-
-// Resolve each category's selected ID to a name using the correct gender-specific list.
-// All three tables have their own auto-increment IDs starting at 1, so a flat id→name
-// map built from all lists would collide (femaleStaff[id=1] overwrites maleStaff[id=1]).
-function buildCategoryNameMap(
-  payload: NominationPayload,
-  male: StaffMember[],
-  female: StaffMember[],
-  all: StaffMember[],
-): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const { key, gender } of CATEGORY_LABELS) {
-    const id = payload[key];
-    const list = gender === 'male' ? male : gender === 'female' ? female : all;
-    result[key] = list.find(s => s.id === id)?.full_name ?? '—';
-  }
-  return result;
-}
-
-export default function ReviewPage({ nominator, payload, onBack, onSubmitted }: Props) {
-  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
-  const [loadingData, setLoadingData] = useState(true);
+export default function ReviewPage({ nominator, nominations, onBack, onSubmitted, onStartOver }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const [male, female, all] = await Promise.all([
-          api.getMaleStaff(),
-          api.getFemaleStaff(),
-          api.getAllStaff(),
-        ]);
-        setCategoryNames(buildCategoryNameMap(payload, male, female, all));
-      } finally {
-        setLoadingData(false);
-      }
-    };
-    load();
-  }, [payload]);
+  const missing = missingCategories(nominations);
+  const payload = buildPayload(nominator, nominations);
 
   const handleSubmit = async () => {
+    if (!payload) return;
     setSubmitting(true);
     setSubmitError('');
     try {
+      // request() throws on any non-2xx, so reaching the next line means 200/201.
       await api.submitNomination(payload);
       onSubmitted();
     } catch (err: unknown) {
@@ -74,82 +39,108 @@ export default function ReviewPage({ nominator, payload, onBack, onSubmitted }: 
   };
 
   return (
-    <div className="w-full max-w-2xl mb-16">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-400/20 border-2 border-green-400/50 mb-4">
-          <span className="text-2xl" role="img" aria-label="clipboard">📋</span>
+    <div className="w-full max-w-2xl mt-4 sm:mt-8 mb-16">
+      <PageHeader
+        icon={
+          <IconBadge>
+            <ClipboardDoodle className="h-10 w-10 text-green-700" />
+          </IconBadge>
+        }
+        title="Review Your Nominations"
+        subtitle="Please confirm before submitting"
+      />
+
+      {/* Clipboard */}
+      <div className="relative mt-10">
+        {/* Clip */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-6 left-1/2 z-10 flex h-11 w-32 -translate-x-1/2 items-start justify-center border-2 border-stone-800 bg-stone-500 pt-2 shadow-[2px_3px_0px_0px_rgba(41,37,36,1)] rounded-[0.8rem_0.8rem_0.4rem_0.4rem]"
+        >
+          <span className="h-3 w-12 rounded-full border-2 border-stone-800 bg-paper" />
         </div>
-        <h1 className="text-2xl font-bold text-white">Review Your Nominations</h1>
-        <p className="text-slate-400 text-sm mt-1">Please confirm before submitting</p>
-      </div>
 
-      <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
-        {/* Nominator banner */}
-        <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl mb-6">
-          <span className="text-2xl" role="img" aria-label="user">👤</span>
-          <div>
-            <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Submitting as</p>
-            <p className="text-blue-900 font-semibold">{nominator.full_name}</p>
-          </div>
-        </div>
+        <div className="hand-drawn-border-alt bg-[#E8D9BF] p-3 sm:p-4">
+          <div className="border-2 border-stone-800 bg-card px-5 pb-7 pt-10 sm:px-8 rounded-[0.6rem_1rem_0.5rem_1.2rem]">
+            <NominatorBanner
+              label="Submitting as"
+              name={nominator.full_name}
+              onStartOver={onStartOver}
+              disabled={submitting}
+            />
 
-        {/* Nominations list */}
-        {loadingData ? (
-          <div className="flex justify-center py-8">
-            <span className="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-          </div>
-        ) : (
-          <ul className="divide-y divide-slate-100">
-            {CATEGORY_LABELS.map(({ key, label }) => (
-              <li key={key} className="flex items-center justify-between py-3.5 gap-4">
-                <span className="text-sm font-medium text-slate-600 shrink-0">{label}</span>
-                <span className="text-sm font-semibold text-slate-900 text-right">
-                  {categoryNames[key] ?? '—'}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {submitError && (
-          <div className="mt-5 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-            <span className="text-red-500 text-sm mt-0.5" aria-hidden>⚠</span>
-            <p className="text-sm text-red-700">{submitError}</p>
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={submitting}
-            className="flex-1 py-3 border-2 border-slate-300 hover:border-slate-400
-                       text-slate-700 font-semibold rounded-xl transition-colors duration-150
-                       disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            ← Go Back and Edit
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting || loadingData}
-            className="flex-1 py-3 bg-green-600 hover:bg-green-700 active:bg-green-800
-                       disabled:bg-slate-300 disabled:cursor-not-allowed
-                       text-white font-semibold rounded-xl transition-colors duration-150
-                       flex items-center justify-center gap-2"
-          >
-            {submitting ? (
-              <>
-                <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Submitting…
-              </>
-            ) : (
-              'Confirm & Submit'
+            {missing.length > 0 && (
+              <div className="mb-5">
+                <Note tone="warning">
+                  {missing.length === 1 ? 'One category is' : `${missing.length} categories are`} still
+                  empty: {missing.map(c => c.label).join(', ')}. Go back and complete{' '}
+                  {missing.length === 1 ? 'it' : 'them'} before submitting.
+                </Note>
+              </div>
             )}
-          </button>
+
+            {/* Checklist */}
+            <ul className="divide-y-2 divide-dashed divide-stone-200">
+              {CATEGORIES.map(({ key, label }) => {
+                const nominee = nominations[key];
+                return (
+                  <li key={key} className="flex items-center gap-3 py-3 sm:gap-4">
+                    <span className="hand-checkbox">
+                      {nominee && <Check className="h-5 w-5 text-green-700" />}
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-500 sm:text-sm sm:normal-case sm:tracking-normal sm:text-stone-600">
+                        {label}
+                      </span>
+                      {nominee ? (
+                        <span className="font-hand text-2xl font-bold leading-tight text-stone-900 sm:text-right">
+                          {nominee.full_name}
+                        </span>
+                      ) : (
+                        <span className="font-hand text-2xl font-semibold leading-tight text-orange-700 sm:text-right">
+                          Not selected
+                        </span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {submitError && (
+              <div className="mt-5">
+                <Note tone="error">{submitError}</Note>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="mt-8 flex flex-col-reverse items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={onBack}
+                disabled={submitting}
+                className="sticker sticker-plain text-xl"
+              >
+                ← Go Back and Edit
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting || !payload}
+                className="sticker sticker-mustard px-8 py-4 text-3xl"
+              >
+                {submitting ? (
+                  <>
+                    <span className="hand-spinner h-5 w-5" />
+                    Submitting…
+                  </>
+                ) : (
+                  'Confirm & Submit'
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

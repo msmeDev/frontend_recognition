@@ -1,56 +1,31 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as api from '../lib/api';
-import type { StaffMember, CategoryDefinition, NominationPayload } from '../types';
+import { CATEGORIES } from '../lib/categories';
+import type { StaffMember, CategoryKey, Nominations } from '../types';
+import { Arrow, BallotDoodle, Check, IconBadge, Tape } from './Doodles';
+import { NominatorBanner, PageHeader } from './WizardChrome';
 
 interface Props {
   nominator: StaffMember;
-  initialSelections?: NominationPayload;
-  onReview: (payload: NominationPayload) => void;
+  // Controlled: the wizard in app/page.tsx owns the selections and persists them.
+  nominations: Nominations;
+  onChange: (nominations: Nominations) => void;
+  onReview: () => void;
+  onStartOver: () => void;
 }
 
-const CATEGORIES: CategoryDefinition[] = [
-  { key: 'best_staff_male_id',       label: 'Best Staff Male',       gender: 'male'   },
-  { key: 'best_staff_female_id',     label: 'Best Staff Female',     gender: 'female' },
-  { key: 'best_dressed_male_id',     label: 'Best Dressed Male',     gender: 'male'   },
-  { key: 'best_dressed_female_id',   label: 'Best Dressed Female',   gender: 'female' },
-  { key: 'most_social_staff_id',     label: 'Most Social Staff',     gender: 'all'    },
-  { key: 'best_team_player_id',      label: 'Best Team Player',      gender: 'all'    },
-  { key: 'most_supportive_staff_id', label: 'Most Supportive Staff', gender: 'all'    },
-];
-
-type Selections = Record<CategoryDefinition['key'], number>;
-
-const EMPTY_SELECTIONS: Selections = {
-  best_staff_male_id:       0,
-  best_staff_female_id:     0,
-  best_dressed_male_id:     0,
-  best_dressed_female_id:   0,
-  most_social_staff_id:     0,
-  best_team_player_id:      0,
-  most_supportive_staff_id: 0,
-};
-
-export default function NominationForm({ nominator, initialSelections, onReview }: Props) {
+export default function NominationForm({ nominator, nominations, onChange, onReview, onStartOver }: Props) {
   const [maleStaff,   setMaleStaff]   = useState<StaffMember[]>([]);
   const [femaleStaff, setFemaleStaff] = useState<StaffMember[]>([]);
   const [allStaff,    setAllStaff]    = useState<StaffMember[]>([]);
-  const [selections,  setSelections]  = useState<Selections>(
-    initialSelections
-      ? {
-          best_staff_male_id:       initialSelections.best_staff_male_id,
-          best_staff_female_id:     initialSelections.best_staff_female_id,
-          best_dressed_male_id:     initialSelections.best_dressed_male_id,
-          best_dressed_female_id:   initialSelections.best_dressed_female_id,
-          most_social_staff_id:     initialSelections.most_social_staff_id,
-          best_team_player_id:      initialSelections.best_team_player_id,
-          most_supportive_staff_id: initialSelections.most_supportive_staff_id,
-        }
-      : EMPTY_SELECTIONS,
-  );
   const [loadingData, setLoadingData] = useState(true);
   const [fetchError,  setFetchError]  = useState('');
+
+  // Latest selections/callback, read when the lists arrive without re-running the fetch.
+  const latest = useRef({ nominations, onChange });
+  latest.current = { nominations, onChange };
 
   // Load all three staff lists on mount
   useEffect(() => {
@@ -64,6 +39,23 @@ export default function NominationForm({ nominator, initialSelections, onReview 
         setMaleStaff(male);
         setFemaleStaff(female);
         setAllStaff(all);
+
+        // A restored draft may point at staff that no longer exist (e.g. after a
+        // re-seed). Keep only picks whose id AND name still match the current list.
+        const lists = { male, female, all };
+        const current = latest.current.nominations;
+        const cleaned: Nominations = {};
+        for (const cat of CATEGORIES) {
+          const picked = current[cat.key];
+          if (!picked) continue;
+          const match = lists[cat.gender].find(
+            s => s.id === picked.id && s.full_name === picked.full_name,
+          );
+          if (match) cleaned[cat.key] = { id: match.id, full_name: match.full_name };
+        }
+        if (Object.keys(cleaned).length !== Object.keys(current).length) {
+          latest.current.onChange(cleaned);
+        }
       } catch {
         setFetchError('Failed to load staff data. Please refresh the page.');
       } finally {
@@ -74,7 +66,7 @@ export default function NominationForm({ nominator, initialSelections, onReview 
   }, []);
 
   // Return the right staff list for a given category key
-  const getStaffList = (key: CategoryDefinition['key']): StaffMember[] => {
+  const getStaffList = (key: CategoryKey): StaffMember[] => {
     const cat = CATEGORIES.find(c => c.key === key);
     if (cat?.gender === 'male')   return maleStaff;
     if (cat?.gender === 'female') return femaleStaff;
@@ -82,113 +74,115 @@ export default function NominationForm({ nominator, initialSelections, onReview 
   };
 
   // Collect the full_names already selected in every OTHER dropdown
-  const getDisabledNames = (excludeKey: CategoryDefinition['key']): Set<string> => {
+  const getDisabledNames = (excludeKey: CategoryKey): Set<string> => {
     const disabled = new Set<string>();
     for (const cat of CATEGORIES) {
       if (cat.key === excludeKey) continue;
-      const id = selections[cat.key];
-      if (!id) continue;
-      const found = getStaffList(cat.key).find(s => s.id === id);
-      if (found) disabled.add(found.full_name);
+      const picked = nominations[cat.key];
+      if (picked) disabled.add(picked.full_name);
     }
     return disabled;
   };
 
-  const handleSelect = (key: CategoryDefinition['key'], value: string) => {
-    setSelections(prev => ({ ...prev, [key]: Number(value) }));
+  // Store the whole { id, full_name } so the Review page can display it directly.
+  const handleSelect = (key: CategoryKey, value: string) => {
+    const next: Nominations = { ...nominations };
+    const staff = getStaffList(key).find(s => s.id === Number(value));
+    if (staff) next[key] = { id: staff.id, full_name: staff.full_name };
+    else delete next[key];
+    onChange(next);
   };
 
-  const allSelected = CATEGORIES.every(c => selections[c.key] !== 0);
-  const filled      = CATEGORIES.filter(c => selections[c.key] !== 0).length;
+  const filled      = CATEGORIES.filter(c => nominations[c.key]).length;
+  const allSelected = filled === CATEGORIES.length;
 
   const handleReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!allSelected) return;
-    onReview({
-      nominator_id:            nominator.id,
-      best_staff_male_id:       selections.best_staff_male_id,
-      best_staff_female_id:     selections.best_staff_female_id,
-      best_dressed_male_id:     selections.best_dressed_male_id,
-      best_dressed_female_id:   selections.best_dressed_female_id,
-      most_social_staff_id:     selections.most_social_staff_id,
-      best_team_player_id:      selections.best_team_player_id,
-      most_supportive_staff_id: selections.most_supportive_staff_id,
-    });
+    onReview();
   };
 
   if (loadingData) {
     return (
-      <div className="flex flex-col items-center justify-center mt-32 text-white gap-4">
-        <span className="inline-block w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-        <p className="text-slate-300">Loading staff list…</p>
+      <div className="mt-32 flex flex-col items-center justify-center gap-4 text-stone-700">
+        <span className="hand-spinner h-12 w-12 border-[3px] text-orange-700" />
+        <p className="font-hand text-2xl">Loading staff list…</p>
       </div>
     );
   }
 
   if (fetchError) {
     return (
-      <div className="mt-16 w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl text-center">
-        <p className="text-red-600 font-medium">{fetchError}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-6 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors"
-        >
+      <div className="hand-card mt-16 w-full max-w-md p-8 text-center">
+        <p className="font-semibold text-red-800">{fetchError}</p>
+        <button onClick={() => window.location.reload()} className="sticker sticker-mustard mt-6">
           Refresh
         </button>
       </div>
     );
   }
 
+  const remaining = CATEGORIES.length - filled;
+
   return (
-    <div className="w-full max-w-3xl mb-16">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-400/20 border-2 border-amber-400/50 mb-4">
-          <span className="text-2xl" role="img" aria-label="ballot">🗳️</span>
-        </div>
-        <h1 className="text-2xl font-bold text-white">Nomination Form</h1>
-        <p className="text-slate-400 text-sm mt-1">MSME Staff Recognition 2026</p>
-      </div>
+    <div className="w-full max-w-3xl mt-4 sm:mt-8 mb-16">
+      <PageHeader
+        icon={
+          <IconBadge>
+            <BallotDoodle className="h-10 w-10 text-orange-700" />
+          </IconBadge>
+        }
+        title="Nomination Form"
+        subtitle="MSME Staff Recognition 2026"
+      />
 
-      <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8">
-        {/* Nominator banner */}
-        <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl mb-6">
-          <span className="text-2xl" role="img" aria-label="user">👤</span>
-          <div>
-            <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Nominating as</p>
-            <p className="text-blue-900 font-semibold">{nominator.full_name}</p>
-          </div>
-          {/* Progress pill */}
-          <div className="ml-auto text-right">
-            <span className="text-xs text-slate-500">Progress</span>
-            <p className="text-sm font-bold text-blue-700">{filled} / 7</p>
-          </div>
-        </div>
+      <div className="hand-card p-5 sm:p-8">
+        <Tape className="-top-4 left-10 -rotate-3" />
+        <Tape className="-top-4 right-10 hidden rotate-2 sm:block" />
 
-        <p className="text-sm text-slate-500 mb-6">
-          Select one nominee per category. The same person <strong>cannot</strong> appear
-          in more than one category. Self-nomination is allowed.
+        <NominatorBanner
+          label="Nominating as"
+          name={nominator.full_name}
+          onStartOver={onStartOver}
+          aside={
+            <span
+              className="ml-auto rotate-2 border-2 border-stone-800 bg-yellow-400 px-3 py-1 font-hand text-2xl font-bold leading-none text-stone-900 rounded-[0.6rem_0.3rem_0.7rem_0.4rem]"
+              aria-label={`${filled} of ${CATEGORIES.length} categories filled`}
+            >
+              {filled} / {CATEGORIES.length}
+            </span>
+          }
+        />
+
+        <p className="mb-8 text-sm leading-relaxed text-stone-600">
+          Select one nominee per category. The same person{' '}
+          <strong className="font-hand text-xl text-orange-700">cannot</strong> appear in more than
+          one category. Self-nomination is allowed.
         </p>
 
         <form onSubmit={handleReview}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {CATEGORIES.map(cat => {
+          <div className="grid grid-cols-1 gap-x-10 gap-y-7 lg:grid-cols-2">
+            {CATEGORIES.map((cat, index) => {
               const staffList    = getStaffList(cat.key);
               const disabledNames = getDisabledNames(cat.key);
-              const selectedId   = selections[cat.key];
+              const selectedId   = nominations[cat.key]?.id ?? 0;
 
               return (
-                <div key={cat.key} className="flex flex-col gap-1.5">
-                  <label
-                    htmlFor={cat.key}
-                    className="text-sm font-semibold text-slate-700 flex items-center gap-1.5"
-                  >
+                <div key={cat.key} className="flex flex-col gap-1">
+                  <label htmlFor={cat.key} className="flex items-center gap-2">
+                    {/* Numbered circle that turns into a green tick once filled */}
                     <span
-                      className={`inline-block w-2 h-2 rounded-full ${
-                        selectedId ? 'bg-green-500' : 'bg-slate-300'
+                      className={`inline-flex h-7 w-7 shrink-0 items-center justify-center border-2 font-hand text-lg font-bold leading-none
+                                  rounded-[50%_45%_55%_48%] ${
+                        selectedId
+                          ? 'border-green-700 bg-green-50 text-green-700'
+                          : 'border-stone-400 text-stone-500'
                       }`}
-                    />
-                    {cat.label}
+                      aria-hidden="true"
+                    >
+                      {selectedId ? <Check className="h-4 w-4" /> : index + 1}
+                    </span>
+                    <span className="font-hand text-2xl font-bold leading-none text-stone-800">{cat.label}</span>
                   </label>
 
                   <div className="relative">
@@ -196,10 +190,7 @@ export default function NominationForm({ nominator, initialSelections, onReview 
                       id={cat.key}
                       value={selectedId || ''}
                       onChange={e => handleSelect(cat.key, e.target.value)}
-                      className="w-full px-4 py-2.5 pr-10 border border-slate-300 rounded-xl
-                                 text-slate-700 bg-white appearance-none cursor-pointer
-                                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                 transition-shadow text-sm"
+                      className={`line-input cursor-pointer pr-8 ${selectedId ? 'font-semibold text-stone-900' : 'text-stone-500'}`}
                     >
                       <option value="">— Select nominee —</option>
                       {staffList.map(staff => {
@@ -213,39 +204,46 @@ export default function NominationForm({ nominator, initialSelections, onReview 
                         );
                       })}
                     </select>
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
-                      ▼
-                    </span>
+                    <Arrow
+                      className="pointer-events-none absolute right-1 top-1/2 h-4 w-5 -translate-y-1/2 rotate-90 text-stone-500"
+                    />
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* Progress bar */}
-          <div className="mt-6 mb-2">
-            <div className="flex justify-between text-xs text-slate-500 mb-1">
+          {/* Progress */}
+          <div className="mt-10 mb-2">
+            <div className="mb-2 flex justify-between font-hand text-xl text-stone-600">
               <span>Categories filled</span>
-              <span>{filled} of 7</span>
+              <span>
+                {filled} of {CATEGORIES.length}
+              </span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                style={{ width: `${(filled / 7) * 100}%` }}
-              />
+            <div
+              className="hand-progress"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={CATEGORIES.length}
+              aria-valuenow={filled}
+              aria-label="Categories filled"
+            >
+              <span className="hand-progress-fill" style={{ width: `${(filled / CATEGORIES.length) * 100}%` }} />
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={!allSelected}
-            className="mt-6 w-full py-3.5 bg-blue-700 hover:bg-blue-800 active:bg-blue-900
-                       disabled:bg-slate-300 disabled:cursor-not-allowed
-                       text-white font-semibold rounded-xl transition-colors duration-150
-                       flex items-center justify-center gap-2 text-base"
-          >
-            {allSelected ? 'Review Nominations →' : `Please complete all ${7 - filled} remaining ${7 - filled === 1 ? 'category' : 'categories'}`}
-          </button>
+          <div className="mt-8 text-center">
+            <button
+              type="submit"
+              disabled={!allSelected}
+              className="sticker sticker-terracotta w-full sm:w-auto sm:px-10"
+            >
+              {allSelected
+                ? 'Review Nominations →'
+                : `Please complete all ${remaining} remaining ${remaining === 1 ? 'category' : 'categories'}`}
+            </button>
+          </div>
         </form>
       </div>
     </div>

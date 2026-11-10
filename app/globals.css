@@ -2,9 +2,213 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/*
+ * Hand-crafted theme.
+ * Fonts: Caveat (handwritten, headings/accents) and Nunito (rounded body text),
+ * loaded via next/font in app/layout.tsx as --font-hand / --font-body.
+ * Palette: cream paper, charcoal ink (stone-800), terracotta (orange-700),
+ * mustard (yellow-400), sage (green-700).
+ */
 
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: #f1f5f9;
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-hand;
+  }
+
+  ::selection {
+    @apply bg-yellow-300 text-stone-900;
+  }
+}
+
+@layer components {
+  /* ── Paper ─────────────────────────────────────────────────────────────── */
+
+  /* Cream page with a faint grain (SVG noise) and warm edges. */
+  .paper-bg {
+    background-color: #f9f6f0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .16 0 0 0 0 .14 0 0 0 0 .12 .11 0 0 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      radial-gradient(ellipse at center, transparent 55%, rgba(180, 140, 90, 0.10) 100%);
+    background-attachment: fixed;
+  }
+
+  /* Ruled notepad paper with a terracotta margin line. */
+  .notepad {
+    background-color: #fffdf8;
+    background-image:
+      linear-gradient(90deg, transparent 2.25rem, rgba(194, 65, 12, 0.28) 2.25rem, rgba(194, 65, 12, 0.28) calc(2.25rem + 2px), transparent calc(2.25rem + 2px)),
+      repeating-linear-gradient(180deg, transparent 0, transparent 31px, rgba(41, 37, 36, 0.07) 31px, rgba(41, 37, 36, 0.07) 32px);
+  }
+
+  /* ── Cards ─────────────────────────────────────────────────────────────── */
+
+  /* Hand-drawn box: solid ink border, hard offset shadow, uneven corners. */
+  .hand-drawn-border {
+    @apply border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(41,37,36,1)] rounded-[2rem_1rem_2rem_1rem];
+  }
+
+  .hand-drawn-border-alt {
+    @apply border-2 border-stone-800 shadow-[4px_4px_0px_0px_rgba(41,37,36,1)] rounded-[1rem_2rem_1rem_2rem];
+  }
+
+  .hand-card {
+    @apply hand-drawn-border relative bg-card;
+  }
+
+  /* Strip of washi tape holding a card to the page. */
+  .washi {
+    @apply pointer-events-none absolute h-7 w-28 bg-yellow-400/60 border-x border-dashed border-yellow-600/40;
+    clip-path: polygon(3% 0, 97% 4%, 100% 50%, 97% 100%, 2% 96%, 0 50%);
+  }
+
+  /* ── Buttons ───────────────────────────────────────────────────────────── */
+
+  /* Sticker: bold border, flat colour, slight tilt that straightens on hover. */
+  .sticker {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3
+           border-2 border-stone-800 rounded-[1.1rem_0.6rem_1.2rem_0.7rem]
+           font-hand text-2xl font-bold leading-none
+           shadow-[3px_3px_0px_0px_rgba(41,37,36,1)]
+           -rotate-1 transition-all duration-150
+           enabled:hover:rotate-0 enabled:hover:-translate-y-0.5 enabled:hover:shadow-[4px_5px_0px_0px_rgba(41,37,36,1)]
+           enabled:active:translate-x-[2px] enabled:active:translate-y-[2px] enabled:active:shadow-none
+           focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-4 focus-visible:outline-orange-700;
+  }
+
+  .sticker-mustard {
+    @apply bg-yellow-400 text-stone-900 enabled:hover:bg-yellow-300;
+  }
+
+  .sticker-terracotta {
+    @apply bg-orange-700 text-orange-50 enabled:hover:bg-orange-600;
+  }
+
+  .sticker-sage {
+    @apply bg-green-700 text-green-50 enabled:hover:bg-green-600;
+  }
+
+  .sticker-plain {
+    @apply bg-card text-stone-800 rotate-1 enabled:hover:bg-stone-100;
+  }
+
+  /* After the colour variants so it always wins: a flat, untilted, greyed sticker. */
+  .sticker:disabled {
+    @apply cursor-not-allowed rotate-0 border-stone-400 bg-stone-200 text-stone-500 shadow-none;
+  }
+
+  /* "Not you? Start over" and other doodled text links. */
+  .doodle-link {
+    @apply font-hand text-xl font-semibold leading-none text-orange-700
+           underline decoration-dashed decoration-2 underline-offset-4
+           hover:text-orange-900 disabled:cursor-not-allowed disabled:opacity-50
+           focus-visible:outline-2 focus-visible:outline-dashed focus-visible:outline-offset-4 focus-visible:outline-orange-700;
+  }
+
+  /* ── Inputs ────────────────────────────────────────────────────────────── */
+
+  /* A single line to write on; turns solid terracotta when active. */
+  .line-input {
+    @apply w-full appearance-none rounded-none border-0 border-b-2 border-dashed border-stone-800 bg-transparent
+           px-1 py-2 text-base text-stone-800 placeholder-stone-400
+           transition-colors focus:border-solid focus:border-orange-700 focus:outline-none focus:ring-0
+           disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  /* Suggestion dropdown styled as a sticky note. */
+  .sticky-note {
+    @apply border-2 border-stone-800 bg-yellow-200 shadow-[3px_4px_0px_0px_rgba(41,37,36,0.85)]
+           rounded-[0.25rem_0.25rem_1.25rem_0.4rem];
+  }
+
+  /* Hand-drawn checkbox square for the review checklist. */
+  .hand-checkbox {
+    @apply inline-flex h-7 w-7 shrink-0 items-center justify-center border-2 border-stone-800 bg-card
+           rounded-[0.35rem_0.6rem_0.3rem_0.5rem];
+  }
+
+  /* ── Progress ──────────────────────────────────────────────────────────── */
+
+  .hand-progress {
+    @apply relative h-3 w-full;
+  }
+
+  /* Dashed pencil line along the middle. */
+  .hand-progress::before {
+    content: '';
+    @apply absolute inset-x-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-stone-400;
+  }
+
+  /* Wavy terracotta stroke drawn over it as categories fill. */
+  .hand-progress-fill {
+    @apply relative block h-3 transition-[width] duration-500 ease-out;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Cpath d='M0 6 Q6 1 12 6 T24 6' fill='none' stroke='%23c2410c' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-size: 24px 12px;
+  }
+
+  /* ── Misc ──────────────────────────────────────────────────────────────── */
+
+  /* Dashed spinning circle, like a pencil going round. */
+  .hand-spinner {
+    @apply inline-block rounded-full border-2 border-dashed border-current animate-spin;
+    animation-duration: 1.6s;
+  }
+}
+
+/* ── Confetti (Thank You page) ───────────────────────────────────────────── */
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg);
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift, 0px), 105vh, 0) rotate(var(--spin, 540deg));
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.6, 1);
+  animation-iteration-count: 3;
+  animation-fill-mode: both;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+.wiggle {
+  animation: wiggle 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece {
+    display: none;
+  }
+  .wiggle,
+  .hand-spinner {
+    animation: none;
+  }
+  .sticker {
+    @apply transition-none;
+  }
 }

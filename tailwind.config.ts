@@ -8,7 +8,14 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        // Loaded with next/font in app/layout.tsx, exposed as CSS variables.
+        sans: ['var(--font-body)', 'ui-rounded', 'system-ui', 'sans-serif'],
+        hand: ['var(--font-hand)', 'cursive'],
+      },
+      colors: {
+        paper: '#F9F6F0',  // page background
+        card: '#FFFDF8',   // card surface, a touch lighter than the page
+        ink: '#292524',    // stone-800 — text, borders, shadows
       },
     },
   },

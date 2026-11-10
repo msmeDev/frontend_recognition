@@ -1,58 +1,78 @@
 'use client';
 
+import { Arrow, Sparkle, SquiggleUnderline, Star, Tape, TrophyDoodle } from './Doodles';
+
 interface Props {
   onStart: () => void;
 }
 
 export default function WelcomePage({ onStart }: Props) {
   return (
-    <div className="w-full max-w-lg mt-16 text-center">
-      {/* Trophy icon */}
-      <div className="flex justify-center mb-6">
-        <div className="w-24 h-24 rounded-full bg-amber-400/20 border-2 border-amber-400/50 flex items-center justify-center">
-          <span className="text-5xl" role="img" aria-label="trophy">🏆</span>
-        </div>
+    <div className="w-full max-w-lg mt-8 sm:mt-14 mb-12">
+      {/* Flyer heading */}
+      <div className="relative mb-10 text-center">
+        <TrophyDoodle className="wiggle mx-auto mb-2 h-20 w-20 text-orange-700" />
+        <Sparkle className="absolute left-6 top-4 h-6 w-6 text-yellow-500 sm:left-14" />
+        <Star className="absolute right-8 top-10 h-5 w-5 rotate-12 text-green-700 sm:right-16" />
+
+        <h1 className="text-6xl font-bold leading-[0.85] text-stone-800 sm:text-7xl">
+          MSME Staff
+          <br />
+          <span className="relative inline-block text-orange-700">
+            Recognition
+            <SquiggleUnderline className="absolute -bottom-2 left-0 h-3 w-full text-yellow-400" />
+          </span>
+        </h1>
+
+        {/* Year sticker */}
+        <span
+          className="mt-6 inline-block rotate-[-4deg] border-2 border-stone-800 bg-yellow-400 px-4 py-1
+                     font-hand text-3xl font-bold text-stone-900 shadow-[3px_3px_0px_0px_rgba(41,37,36,1)]
+                     rounded-[0.8rem_0.4rem_0.9rem_0.5rem]"
+        >
+          2026
+        </span>
       </div>
 
-      {/* Title */}
-      <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
-        MSME Staff Recognition
-      </h1>
-      <p className="text-2xl font-semibold text-amber-400 mb-6">2026</p>
-
       {/* Card */}
-      <div className="bg-white rounded-2xl shadow-2xl p-8 text-left">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4 text-center">
-          Nomination Portal
-        </h2>
+      <div className="hand-card p-6 sm:p-8 text-left">
+        <Tape className="-top-4 left-1/2 -translate-x-1/2 -rotate-2" />
 
-        <p className="text-slate-600 leading-relaxed mb-4">
+        <h2 className="mb-4 text-center text-4xl font-bold text-stone-800">Nomination Portal</h2>
+
+        <p className="mb-4 leading-relaxed text-stone-700">
           Welcome to the MSME Staff Recognition 2026 Nomination Exercise. This is
           your opportunity to celebrate and honour outstanding colleagues who have
           made a meaningful impact this year.
         </p>
 
-        <p className="text-slate-600 leading-relaxed mb-6">
+        <p className="mb-6 leading-relaxed text-stone-700">
           You will be asked to nominate one colleague per category across
-          <strong className="text-slate-800"> 7 award categories</strong>. Each
+          <strong className="font-hand text-2xl font-bold leading-none text-orange-700"> 7 award categories</strong>. Each
           nominee may only appear in one category per submission.
         </p>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-700 font-medium">Before you begin</p>
-          <ul className="mt-2 text-sm text-blue-600 space-y-1 list-disc list-inside">
-            <li>Your full name must match our staff records to proceed.</li>
-            <li>Each staff member can submit only one set of nominations.</li>
-            <li>You may nominate yourself in any category.</li>
+        <div className="mb-8 border-2 border-dashed border-green-700/60 bg-green-50/60 p-4 rounded-[1rem_0.5rem_1.2rem_0.6rem]">
+          <p className="font-hand text-2xl font-bold text-green-800">Before you begin…</p>
+          <ul className="mt-2 space-y-2 text-sm text-stone-700">
+            {[
+              'Your full name must match our staff records to proceed.',
+              'Each staff member can submit only one set of nominations.',
+              'You may nominate yourself in any category.',
+            ].map(item => (
+              <li key={item} className="flex items-start gap-2">
+                <Arrow className="mt-0.5 h-4 w-6 shrink-0 text-green-700" />
+                <span>{item}</span>
+              </li>
+            ))}
           </ul>
         </div>
 
-        <button
-          onClick={onStart}
-          className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 active:bg-blue-900 text-white font-semibold rounded-xl transition-colors duration-150 text-lg shadow-md"
-        >
-          Get Started
-        </button>
+        <div className="text-center">
+          <button onClick={onStart} className="sticker sticker-mustard w-full px-10 text-3xl sm:w-auto">
+            Get Started
+          </button>
+        </div>
       </div>
     </div>
   );

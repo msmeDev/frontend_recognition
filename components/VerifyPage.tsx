@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import * as api from '../lib/api';
 import type { StaffMember, StaffSearchResult } from '../types';
+import { IconBadge, PencilDoodle, Tape } from './Doodles';
+import { Note, PageHeader } from './WizardChrome';
 
 interface Props {
   onVerified: (staff: StaffMember) => void;
@@ -132,29 +134,28 @@ export default function VerifyPage({ onVerified }: Props) {
   const activeId = activeIndex >= 0 ? `${LISTBOX_ID}-${activeIndex}` : undefined;
 
   return (
-    <div className="w-full max-w-md mt-16">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-400/20 border-2 border-amber-400/50 mb-4">
-          <span className="text-2xl" role="img" aria-label="person">👤</span>
-        </div>
-        <h1 className="text-2xl font-bold text-white">Staff Verification</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          MSME Staff Recognition 2026
-        </p>
-      </div>
+    <div className="w-full max-w-md mt-8 sm:mt-14 mb-12">
+      <PageHeader
+        icon={
+          <IconBadge>
+            <PencilDoodle className="h-10 w-10 text-orange-700" />
+          </IconBadge>
+        }
+        title="Who's nominating?"
+        subtitle="MSME Staff Recognition 2026"
+      />
 
-      <div className="bg-white rounded-2xl shadow-2xl p-8">
-        <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+      {/* Notepad card */}
+      <div className="hand-card notepad px-6 pb-8 pt-7 sm:pl-14 sm:pr-8">
+        <Tape className="-top-4 right-8 rotate-3" />
+
+        <p className="mb-6 leading-8 text-stone-700">
           Start typing your name and pick it from the list, or enter your full
           name as it appears in the staff directory.
         </p>
 
         <form onSubmit={handleVerify} noValidate>
-          <label
-            htmlFor="staff-name"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
-          >
+          <label htmlFor="staff-name" className="block font-hand text-2xl font-bold text-orange-700">
             Full Name
           </label>
 
@@ -182,28 +183,26 @@ export default function VerifyPage({ onVerified }: Props) {
               autoComplete="off"
               autoFocus
               disabled={loading}
-              className="w-full px-4 py-3 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                         disabled:bg-slate-50 disabled:cursor-not-allowed transition-shadow"
+              className="line-input font-hand text-3xl leading-tight placeholder:text-stone-400"
             />
 
             {showDropdown && (
               <div
-                className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden"
+                className="sticky-note absolute left-1 right-1 z-20 mt-3 rotate-[-0.6deg] overflow-hidden"
                 // Keep focus on the input while clicking inside the dropdown.
                 onMouseDown={e => e.preventDefault()}
               >
                 {searching ? (
-                  <div className="flex items-center gap-2 px-4 py-3 text-sm text-slate-500">
-                    <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-blue-600 rounded-full animate-spin" />
+                  <div className="flex items-center gap-2 px-4 py-3 text-sm text-stone-700">
+                    <span className="hand-spinner h-4 w-4 text-orange-700" />
                     Searching…
                   </div>
                 ) : searchError ? (
-                  <div className="px-4 py-3 text-sm text-red-600">
+                  <div className="px-4 py-3 text-sm text-red-800">
                     Couldn&apos;t load suggestions. You can still type your full name.
                   </div>
                 ) : suggestions.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-slate-500">
+                  <div className="px-4 py-3 text-sm text-stone-700">
                     No matching names found.
                   </div>
                 ) : (
@@ -216,8 +215,8 @@ export default function VerifyPage({ onVerified }: Props) {
                         aria-selected={i === activeIndex}
                         onClick={() => pickSuggestion(s)}
                         onMouseEnter={() => setActiveIndex(i)}
-                        className={`px-4 py-2.5 text-sm cursor-pointer text-slate-800 ${
-                          i === activeIndex ? 'bg-blue-50 text-blue-800' : 'hover:bg-slate-50'
+                        className={`cursor-pointer border-b border-dashed border-yellow-600/40 px-4 py-2 font-hand text-2xl leading-tight text-stone-800 last:border-b-0 ${
+                          i === activeIndex ? 'bg-yellow-300 text-orange-800' : ''
                         }`}
                       >
                         {s.fullName}
@@ -230,29 +229,27 @@ export default function VerifyPage({ onVerified }: Props) {
           </div>
 
           {error && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-              <span className="text-red-500 text-sm mt-0.5" aria-hidden>⚠</span>
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="mt-4">
+              <Note tone="error">{error}</Note>
             </div>
           )}
 
-          <button
-            type="submit"
-            disabled={loading || !name.trim()}
-            className="mt-6 w-full py-3.5 bg-blue-700 hover:bg-blue-800 active:bg-blue-900
-                       disabled:bg-slate-300 disabled:cursor-not-allowed
-                       text-white font-semibold rounded-xl transition-colors duration-150 text-base
-                       flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                Verifying…
-              </>
-            ) : (
-              'Verify & Continue'
-            )}
-          </button>
+          <div className="mt-8 text-center">
+            <button
+              type="submit"
+              disabled={loading || !name.trim()}
+              className="sticker sticker-terracotta w-full sm:w-auto sm:px-10"
+            >
+              {loading ? (
+                <>
+                  <span className="hand-spinner h-5 w-5" />
+                  Verifying…
+                </>
+              ) : (
+                'Verify & Continue'
+              )}
+            </button>
+          </div>
         </form>
       </div>
     </div>

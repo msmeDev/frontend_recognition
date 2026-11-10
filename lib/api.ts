@@ -8,8 +8,25 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
+const RETRY_DELAY_MS = 800;
+
+// GETs are safe to repeat, so one retry covers a cold start or a slow database
+// handshake on the serverless backend. POSTs are never retried (no double submits).
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  const isGet = !init.method || init.method.toUpperCase() === 'GET';
+  try {
+    const res = await fetch(url, init);
+    if (!isGet || res.status < 500) return res;
+  } catch (err) {
+    if (!isGet || (err as Error).name === 'AbortError') throw err;
+  }
+  await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+  if (init.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  return fetch(url, init);
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetchWithRetry(`${API_URL}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });

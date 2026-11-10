@@ -30,8 +30,31 @@ export interface NominationResponse {
   message?: string;
 }
 
+export type CategoryKey =
+  | 'best_staff_male'
+  | 'best_staff_female'
+  | 'best_dressed_male'
+  | 'best_dressed_female'
+  | 'most_social_staff'
+  | 'best_team_player'
+  | 'most_supportive_staff';
+
 export interface CategoryDefinition {
-  key: keyof Omit<NominationPayload, 'nominator_id'>;
+  key: CategoryKey;
+  payloadKey: keyof Omit<NominationPayload, 'nominator_id'>;
   label: string;
   gender: 'male' | 'female' | 'all';
+}
+
+// What the dropdowns are bound to and what the Review page reads:
+// nominations.best_staff_male = { id: 1, full_name: 'Kolapo Taofeeq' }
+export type Nominations = Partial<Record<CategoryKey, StaffMember>>;
+
+// Steps: 1 Welcome · 2 Verify · 3 Nominate · 4 Review
+export type WizardStep = 1 | 2 | 3 | 4;
+
+export interface WizardState {
+  step: WizardStep;
+  verifiedStaff: StaffMember | null;
+  nominations: Nominations;
 }
