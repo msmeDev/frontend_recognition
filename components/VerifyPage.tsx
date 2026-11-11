@@ -134,7 +134,7 @@ export default function VerifyPage({ onVerified }: Props) {
   const activeId = activeIndex >= 0 ? `${LISTBOX_ID}-${activeIndex}` : undefined;
 
   return (
-    <div className="w-full max-w-md mt-8 sm:mt-14 mb-12">
+    <div className="w-full max-w-md mt-6 sm:mt-8 mb-6">
       <PageHeader
         icon={
           <IconBadge>

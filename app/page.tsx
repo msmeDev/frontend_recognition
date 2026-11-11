@@ -71,7 +71,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex items-start justify-center px-4 pt-10 pb-20">
+    <main className="min-h-screen flex flex-col items-center px-4 pt-10 pb-24">
       {submitted ? (
         <ThankYouPage />
       ) : (

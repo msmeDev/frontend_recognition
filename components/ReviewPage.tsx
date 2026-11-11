@@ -39,7 +39,7 @@ export default function ReviewPage({ nominator, nominations, onBack, onSubmitted
   };
 
   return (
-    <div className="w-full max-w-2xl mt-4 sm:mt-8 mb-16">
+    <div className="w-full max-w-2xl mt-2 sm:mt-4 mb-10">
       <PageHeader
         icon={
           <IconBadge>

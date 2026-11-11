@@ -125,7 +125,7 @@ export default function NominationForm({ nominator, nominations, onChange, onRev
   const remaining = CATEGORIES.length - filled;
 
   return (
-    <div className="w-full max-w-3xl mt-4 sm:mt-8 mb-16">
+    <div className="w-full max-w-3xl mt-2 sm:mt-4 mb-10">
       <PageHeader
         icon={
           <IconBadge>

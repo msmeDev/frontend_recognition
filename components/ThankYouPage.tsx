@@ -26,7 +26,7 @@ const CONFETTI = Array.from({ length: 32 }, (_, i) => ({
 
 export default function ThankYouPage() {
   return (
-    <div className="w-full max-w-lg mt-8 sm:mt-14 mb-12 text-center">
+    <div className="w-full max-w-lg mt-6 sm:mt-8 mb-6 text-center">
       {/* Confetti */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-20 overflow-hidden">
         {CONFETTI.map((c, i) => (
