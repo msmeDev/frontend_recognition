@@ -71,7 +71,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen flex items-start justify-center px-4 py-8">
+    <main className="min-h-screen flex items-start justify-center px-4 pt-10 pb-20">
       {submitted ? (
         <ThankYouPage />
       ) : (

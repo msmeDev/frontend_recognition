@@ -15,9 +15,15 @@
     color-scheme: light;
   }
 
-  html,
-  body {
+  html {
     overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body {
+    /* clip instead of hidden: prevents horizontal overflow without creating
+       a new scroll container, so vertical page-scroll is never interrupted. */
+    overflow-x: clip;
   }
 
   h1,
