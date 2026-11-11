@@ -125,7 +125,7 @@ export default function NominationForm({ nominator, nominations, onChange, onRev
   const remaining = CATEGORIES.length - filled;
 
   return (
-    <div className="w-full max-w-3xl mt-2 sm:mt-4 mb-10">
+    <div className="w-full max-w-3xl mt-0 mb-2">
       <PageHeader
         icon={
           <IconBadge>
@@ -136,7 +136,7 @@ export default function NominationForm({ nominator, nominations, onChange, onRev
         subtitle="MSME Staff Recognition 2026"
       />
 
-      <div className="hand-card p-5 sm:p-8">
+      <div className="hand-card p-4 sm:p-5">
         <Tape className="-top-4 left-10 -rotate-3" />
         <Tape className="-top-4 right-10 hidden rotate-2 sm:block" />
 
@@ -154,14 +154,14 @@ export default function NominationForm({ nominator, nominations, onChange, onRev
           }
         />
 
-        <p className="mb-8 text-sm leading-relaxed text-stone-600">
+        <p className="mb-2 text-sm leading-relaxed text-stone-600">
           Select one nominee per category. The same person{' '}
           <strong className="font-hand text-xl text-orange-700">cannot</strong> appear in more than
           one category. Self-nomination is allowed.
         </p>
 
         <form onSubmit={handleReview}>
-          <div className="grid grid-cols-1 gap-x-10 gap-y-7 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-10 gap-y-3 lg:grid-cols-2">
             {CATEGORIES.map((cat, index) => {
               const staffList    = getStaffList(cat.key);
               const disabledNames = getDisabledNames(cat.key);
@@ -214,7 +214,7 @@ export default function NominationForm({ nominator, nominations, onChange, onRev
           </div>
 
           {/* Progress */}
-          <div className="mt-10 mb-2">
+          <div className="mt-3 mb-1">
             <div className="mb-2 flex justify-between font-hand text-xl text-stone-600">
               <span>Categories filled</span>
               <span>
@@ -233,7 +233,7 @@ export default function NominationForm({ nominator, nominations, onChange, onRev
             </div>
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-3 text-center">
             <button
               type="submit"
               disabled={!allSelected}

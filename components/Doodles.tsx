@@ -176,7 +176,7 @@ export function Tape({ className = '' }: { className?: string }) {
 export function IconBadge({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`inline-flex h-16 w-16 items-center justify-center border-2 border-stone-800 bg-card
+      className={`inline-flex h-10 w-10 items-center justify-center border-2 border-stone-800 bg-card
                   rounded-[48%_52%_45%_55%/55%_45%_55%_45%] shadow-[3px_3px_0px_0px_rgba(41,37,36,1)] ${className}`}
     >
       {children}

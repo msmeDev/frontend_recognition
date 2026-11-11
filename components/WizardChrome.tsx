@@ -13,13 +13,13 @@ export function PageHeader({
   subtitle?: string;
 }) {
   return (
-    <div className="mb-8 text-center">
-      <div className="mb-3 inline-block -rotate-3">{icon}</div>
-      <h1 className="relative mx-auto w-fit text-5xl font-bold leading-none text-stone-800 sm:text-6xl">
+    <div className="mb-3 text-center">
+      <div className="mb-1 inline-block -rotate-3">{icon}</div>
+      <h1 className="relative mx-auto w-fit text-4xl font-bold leading-none text-stone-800">
         {title}
-        <SquiggleUnderline className="absolute -bottom-3 left-0 h-3 w-full text-yellow-400" />
+        <SquiggleUnderline className="absolute -bottom-2 left-0 h-3 w-full text-yellow-400" />
       </h1>
-      {subtitle && <p className="mt-5 text-sm font-semibold tracking-wide text-stone-500">{subtitle}</p>}
+      {subtitle && <p className="mt-1 text-sm font-semibold tracking-wide text-stone-500">{subtitle}</p>}
     </div>
   );
 }
@@ -39,7 +39,7 @@ export function NominatorBanner({
   aside?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 border-2 border-dashed border-green-700/60 bg-green-50/60 px-4 py-3 rounded-[1rem_0.5rem_1.2rem_0.6rem]">
+    <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-2 border-dashed border-green-700/60 bg-green-50/60 px-4 py-2 rounded-[1rem_0.5rem_1.2rem_0.6rem]">
       <p className="min-w-0 flex-1 leading-snug">
         <span className="text-sm font-semibold text-green-800">{label} </span>
         <span className="font-hand text-2xl font-bold text-stone-800">{name}</span>

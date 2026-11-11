@@ -39,7 +39,7 @@ export default function ReviewPage({ nominator, nominations, onBack, onSubmitted
   };
 
   return (
-    <div className="w-full max-w-2xl mt-2 sm:mt-4 mb-10">
+    <div className="w-full max-w-2xl mt-0 mb-2">
       <PageHeader
         icon={
           <IconBadge>
@@ -51,7 +51,7 @@ export default function ReviewPage({ nominator, nominations, onBack, onSubmitted
       />
 
       {/* Clipboard */}
-      <div className="relative mt-10">
+      <div className="relative mt-5">
         {/* Clip */}
         <div
           aria-hidden="true"
@@ -61,7 +61,7 @@ export default function ReviewPage({ nominator, nominations, onBack, onSubmitted
         </div>
 
         <div className="hand-drawn-border-alt bg-[#E8D9BF] p-3 sm:p-4">
-          <div className="border-2 border-stone-800 bg-card px-5 pb-7 pt-10 sm:px-8 rounded-[0.6rem_1rem_0.5rem_1.2rem]">
+          <div className="border-2 border-stone-800 bg-card px-4 pb-3 pt-8 sm:px-5 rounded-[0.6rem_1rem_0.5rem_1.2rem]">
             <NominatorBanner
               label="Submitting as"
               name={nominator.full_name}
@@ -84,7 +84,7 @@ export default function ReviewPage({ nominator, nominations, onBack, onSubmitted
               {CATEGORIES.map(({ key, label }) => {
                 const nominee = nominations[key];
                 return (
-                  <li key={key} className="flex items-center gap-3 py-3 sm:gap-4">
+                  <li key={key} className="flex items-center gap-3 py-1 sm:gap-4">
                     <span className="hand-checkbox">
                       {nominee && <Check className="h-5 w-5 text-green-700" />}
                     </span>
@@ -114,7 +114,7 @@ export default function ReviewPage({ nominator, nominations, onBack, onSubmitted
             )}
 
             {/* Actions */}
-            <div className="mt-8 flex flex-col-reverse items-stretch gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-3 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={onBack}
